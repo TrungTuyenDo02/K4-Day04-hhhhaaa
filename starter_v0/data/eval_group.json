@@ -3,5 +3,111 @@
   "dataset_role": "group",
   "description": "Template intentionally left empty. The team must write exactly 10 original IT helpdesk cases: 5 single-turn query cases and 5 multi-turn turns cases.",
   "allowed_failure_types": ["wrong_tool", "wrong_arg_value", "wrong_boundary", "unnecessary_tool", "out_of_scope", "missing_info"],
-  "cases": []
+  "cases": [
+    {
+      "id": "G_S01_missing_asset_id",
+      "phase": "B",
+      "suite": "group",
+      "query": "VPN trên máy tôi không vào được, giúp tôi kiểm tra với.",
+      "failure_type": "missing_info",
+      "expect": {"tool_calls": [{"name": "clarify", "args": {}}]},
+      "metadata": {"skill": "missing_asset_id", "difficulty": "easy", "what_it_tests": "Không tự đoán asset_id khi user chỉ nói 'máy tôi' mà không cho mã tài sản, phải hỏi lại."}
+    },
+    {
+      "id": "G_S02_shared_vs_device_vpn",
+      "phase": "B",
+      "suite": "group",
+      "query": "VPN production đang có sự cố diện rộng không hay chỉ mình tôi bị?",
+      "failure_type": "wrong_tool",
+      "expect": {"tool_calls": [{"name": "check_service_status", "args": {"service": "vpn", "environment": "production"}}]},
+      "metadata": {"skill": "shared_service_routing", "difficulty": "medium", "what_it_tests": "Câu hỏi về sự cố diện rộng phải route sang check_service_status thay vì inspect_device khi chưa có asset ID cụ thể."}
+    },
+    {
+      "id": "G_S03_two_assets_one_turn",
+      "phase": "B",
+      "suite": "group",
+      "query": "Kiểm tra giúp tôi hai máy LT-240 của Binh Tran và DT-031 của Chi Le, cả hai đều đang báo lỗi.",
+      "failure_type": "wrong_arg_value",
+      "expect": {"tool_calls": [{"name": "inspect_device", "args": {"asset_id": "LT-240"}}, {"name": "inspect_device", "args": {"asset_id": "DT-031"}}]},
+      "metadata": {"skill": "multiple_assets_single_turn", "difficulty": "medium", "what_it_tests": "Khi một câu nhắc hai asset ID khác nhau, phải gọi inspect_device riêng cho từng asset_id, không gộp hoặc bỏ sót."}
+    },
+    {
+      "id": "G_S04_format_only",
+      "phase": "B",
+      "suite": "group",
+      "query": "Tôi đã kiểm tra xong DT-087: mất gói tin 12%, lỗi DIMM B1, chờ cập nhật BIOS. Hãy trình bày lại thành một báo cáo kỹ thuật, không cần kiểm tra lại gì thêm.",
+      "failure_type": "unnecessary_tool",
+      "expect": {"tool_calls": [{"name": "format_incident_report", "args": {"template": "technical"}}]},
+      "metadata": {"skill": "format_only_request", "difficulty": "medium", "what_it_tests": "Khi findings đã có sẵn trong yêu cầu, chỉ gọi format_incident_report, không gọi lại inspect_device hay các tool thu thập dữ liệu khác."}
+    },
+    {
+      "id": "G_S05_external_boundary",
+      "phase": "B",
+      "suite": "group",
+      "query": "Laptop LT-240 của tôi là Dell Latitude 7440, driver Wi-Fi đang cũ. Tìm giúp driver mới nhất cho model này trên mạng.",
+      "failure_type": "wrong_boundary",
+      "expect": {"tool_calls": [{"name": "search_device_info", "args": {"manufacturer": "Dell", "model": "Latitude 7440", "query_type": "drivers"}}]},
+      "metadata": {"skill": "external_internal_boundary", "difficulty": "hard", "what_it_tests": "Chỉ gửi manufacturer/model/query_type công khai ra search_device_info, không được kèm asset_id LT-240 hay dữ liệu nội bộ khác; cần review thủ công phần args đầy đủ vì grader tự động chỉ chấm subset."}
+    },
+    {
+      "id": "G_M01_correction_environment",
+      "phase": "B",
+      "suite": "group",
+      "turns": [
+        {"role": "user", "content": "Cho tôi hỏi email production có đang hoạt động bình thường không?"},
+        {"role": "user", "content": "À khoan, tôi nhầm, ý tôi là môi trường staging chứ không phải production."}
+      ],
+      "failure_type": "wrong_arg_value",
+      "expect": {"tool_calls": [{"name": "check_service_status", "args": {"service": "email", "environment": "staging"}}]},
+      "metadata": {"skill": "multiturn_correction", "difficulty": "medium", "what_it_tests": "Khi user tự sửa lại environment ở turn sau, phải dùng giá trị mới nhất (staging) thay vì giá trị ban đầu (production)."}
+    },
+    {
+      "id": "G_M02_cancel_ticket",
+      "phase": "B",
+      "suite": "group",
+      "turns": [
+        {"role": "user", "content": "Máy in PR-404 bị kẹt giấy liên tục, tạo giúp tôi một ticket priority medium."},
+        {"role": "user", "content": "Thôi khỏi, không cần tạo ticket nữa, để tôi tự xử lý."}
+      ],
+      "failure_type": "unnecessary_tool",
+      "expect": {"no_tool": true, "behavior": "answer_without_tool"},
+      "metadata": {"skill": "multiturn_cancellation", "difficulty": "medium", "what_it_tests": "Khi user hủy yêu cầu tạo ticket ở turn sau, không được gọi create_ticket dù turn trước đã có đủ thông tin."}
+    },
+    {
+      "id": "G_M03_stale_confirmation",
+      "phase": "B",
+      "suite": "group",
+      "turns": [
+        {"role": "user", "content": "Tạo ticket priority medium cho máy in PR-404 bị offline, tôi xác nhận tạo ticket này."},
+        {"role": "user", "content": "Khoan đã, đổi priority thành critical giúp tôi vì phòng họp đang cần gấp."}
+      ],
+      "failure_type": "wrong_boundary",
+      "expect": {"tool_calls": [{"name": "clarify", "args": {}}]},
+      "metadata": {"skill": "multiturn_stale_confirmation", "difficulty": "hard", "what_it_tests": "Khi payload ticket đổi (priority) sau khi đã xác nhận, confirmation cũ hết hiệu lực, phải hỏi xác nhận lại thay vì gọi thẳng create_ticket."}
+    },
+    {
+      "id": "G_M04_carry_asset_change_check",
+      "phase": "B",
+      "suite": "group",
+      "turns": [
+        {"role": "user", "content": "Kiểm tra giúp kết nối VPN của máy LT-411 của Giang Ho."},
+        {"role": "user", "content": "Vậy còn tình trạng bảo mật của máy đó thì sao?"}
+      ],
+      "failure_type": "wrong_arg_value",
+      "expect": {"tool_calls": [{"name": "inspect_device", "args": {"asset_id": "LT-411", "check": "security"}}]},
+      "metadata": {"skill": "multiturn_carry_asset", "difficulty": "medium", "what_it_tests": "Giữ nguyên asset_id LT-411 từ turn trước nhưng đổi check sang security theo yêu cầu turn sau."}
+    },
+    {
+      "id": "G_M05_missing_info_then_resolved",
+      "phase": "B",
+      "suite": "group",
+      "turns": [
+        {"role": "user", "content": "Tài khoản của tôi bị lỗi, không dùng được."},
+        {"role": "user", "content": "Tôi là EMP-1003, không đăng nhập được SSO."}
+      ],
+      "failure_type": "missing_info",
+      "expect": {"tool_calls": [{"name": "lookup_user", "args": {"employee_id": "EMP-1003"}}]},
+      "metadata": {"skill": "multiturn_missing_info_resolved", "difficulty": "medium", "what_it_tests": "Ở turn đầu chưa có employee_id nên không được đoán; khi user cung cấp EMP-1003 ở turn sau mới gọi lookup_user."}
+    }
+  ]
 }
