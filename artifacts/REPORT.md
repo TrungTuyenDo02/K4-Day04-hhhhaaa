@@ -13,7 +13,9 @@
 
 > Agent hỗ trợ IT helpdesk nội bộ: tra trạng thái dịch vụ dùng chung, chẩn đoán thiết bị theo asset ID, tìm hướng dẫn KB/chính sách, tạo ticket sau xác nhận rõ. Agent không tự đoán ID và từ chối yêu cầu ngoài phạm vi service desk.
 
->
+**Link dùng thử:**
+
+> URL: _(điền sau khi build UI chat, chưa có ở bản báo cáo này)_
 
 ## A2. Tool agent có
 
@@ -88,6 +90,12 @@ Liệt kê đúng 10 case tự viết: 5 single-turn và 5 multi-turn.
 | G_M05_missing_info_then_resolved | Thiếu employee_id rồi được bổ sung | Chỉ gọi lookup_user sau khi có ID | Chưa chạy suite group |
 
 ## B4. Live chat evidence
+
+> UI chat chưa được xây trong phạm vi các version đã làm; bảng dưới sẽ điền sau khi có UI và chạy thử trực tiếp.
+
+| Scenario/turn | Version | Tool calls + args | Transcript/run | Outcome |
+|---|---|---|---|---|
+| _(chưa có, cần bổ sung sau khi build UI)_ | | | | |
 
 ## B4a. Adversarial evidence
 
@@ -204,4 +212,4 @@ repository chung:
 
 **URL repository chung dùng để nộp:**
 
-> URL: https://github.com/thucutos1fpt/K4-Day04-hhhhaaa
+> URL: _(nhóm tự điền)_
